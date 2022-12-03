@@ -4,51 +4,59 @@
 % 8 will have an euler number of -1
 
 function output = digit_guesser(I)
-    output = ""; % output will be a string stating what digit the application thinks the input image contains
+    output = ""; % output will be a string stating what digit the application thinks the input image contains 
+    
+    mask_size = 3;
+    
     I = preprocess(I);
     
     % Label image
      lab_image = label_cvip(I);
-
-     % feature select vector
+    
+    % feature select vector
      featSelect = [0 0 0 1 0 0 1 1];
+    
+    % extract binary object features
+     features = binary_feature_cvip(lab_image, objLabel,featSelect);
+     disp(features);
+    
+     area = features{2, 2};
+     aspect = features{2, 3}
+     euler_number = features{2, 4};
+     thinness = features{2, 25};
 
-    try
-        binary_features = extract_binary_features(lab_image, featSelect, 22);
-    catch
-        warning("unable to load binary features for this image");
-        output = "-1";
-        return;
-    end
+     hor_projections = [];
+     vert_projections = [];
+     for i = 5 : 14
+        hor_projections = [hor_projections, features{2, i}];
+     end
+     for i = 15 : 24
+         vert_projections = [vert_projections, features{2, i}];
+     end
 
-     euler_number = binary_features(1);
-     hor_projections = binary_features(2:11);
-     vert_projections = binary_features(12:21);
-     thinness = binary_features(22);
+     binary_features = extract_binary_features(lab_image, featSelect, )
     
      
      if (euler_number == -1)
-         output = "eight";
+         output = "8";
      elseif (euler_number == 0)
          if (thinness > 0.32)
-             output = "zero";
+             output = "0";
          else
             if (hor_projections(2) == 1 && hor_projections(3) == 1)
-                output = "six";
+                output = "6";
             else
-                output = "nine";
+                output = "9";
             end
          end
      else
          if (~any(hor_projections) && ~any(vert_projections))
-             output = "one";
+             output = "1";
          else
             try
                 binary_features = extract_binary_features(lab_image, [0 0 0 0 0 0 1 1], 21);
             catch
                 warning("unable to load binary features for this image");
-                output = "-1";
-                return;
             end
             
             rst_features = extract_rst_features(lab_image, [1 1 1]);
@@ -57,4 +65,9 @@ function output = digit_guesser(I)
             output = nearest_centroid(features);
          end
      end
+
+     imshow(I);
+    
+     
+
 end
